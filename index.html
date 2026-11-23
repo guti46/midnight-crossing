@@ -224,6 +224,8 @@ function resetRide(message = "Ready") {
   current = profile.points[0];
   byId("ride").textContent = "Start ride";
   byId("status").textContent = message;
+  showReadings();
+  renderTelemetry();
   renderTrack();
 }
 
@@ -270,6 +272,90 @@ function loadPreset() {
 }
 byId("preset").addEventListener("change", loadPreset);
 byId("reset").addEventListener("click", loadPreset);
+function renderTelemetry() {
+  const {points,end} = profile;
+  const total = heights.slice(1).reduce((sum,height,i) => {
+    for (let j = 1; j <= 90; j++) {
+      const a = sample(i,(j-1)/90);
+      const b = sample(i,j/90);
+      sum += Math.hypot(b.h-a.h,b.x-a.x);
+    }
+    return sum;
+  },0);
+  const mphMax = Math.max(20, Math.ceil(Math.max(...points.map(p => p.speed*2.23694))/20)*20);
+  const x = distance => 63 + 874 * distance / total;
+  const speedY = mph => 245 - 211 * mph / mphMax;
+  const loadY = load => 245 - 211 * (load+2)/7;
+  plot.clearRect(0,0,1000,300);
+  plot.font = "19px system-ui";
+  for (let i = 0; i <= 5; i++) {
+    const d = Math.round(i*total/5);
+    const y = speedY(i*mphMax/5);
+    line(plot,[[63,y],[937,y]],"#39304c");
+    plot.fillStyle = "#79e9fa";
+    plot.fillText((i*mphMax/5).toFixed(0),16,y+6);
+    plot.fillStyle = "#bdb0cf";
+    plot.fillText(d+" m",x(d)-17,275);
+  }
+  for (const load of [-2,-1,0,1,2,3,4,5]) {
+    plot.fillStyle = "#ff6aae";
+    plot.fillText(String(load),951,loadY(load)+6);
+  }
+  plot.setLineDash([7,6]);
+  for (const limit of [-1,4]) line(plot,[[63,loadY(limit)],[937,loadY(limit)]],"#ffd081");
+  plot.setLineDash([]);
+  line(plot,points.map(p => [x(p.distance),speedY(p.speed*2.23694)]),"#79e9fa",3);
+  line(plot,points.map(p => [x(p.distance),loadY(p.load)]),"#ff6aae",3);
+  if (profile.failure) line(plot,[[x(end.distance),30],[x(end.distance),245]],"#ffd081",2);
+  const valley = heights[0] > heights[1] && heights[2] > heights[1] &&
+    points.find(p => p.x === span);
+  byId("valley").textContent = valley
+    ? "First valley · " + (valley.speed*2.23694).toFixed(2) + " mph · " + valley.load.toFixed(3) + " g (arrival)"
+    : "";
+}
+
+function showReadings() {
+  byId("speed").textContent = (current.speed*2.23694).toFixed(1) + " mph";
+  byId("load").textContent = current.load.toFixed(2) + " g";
+  byId("distance").textContent = current.distance.toFixed(1) + " m";
+}
+
+function ride() {
+  if (frame) {
+    resetRide("Ride reset");
+    return;
+  }
+  const start = performance.now();
+  const rollback = profile.failure?.startsWith("Rollback");
+  const {points,end} = profile;
+  const reverseTime = rollback ? Math.min(2.2,end.time) : 0;
+  byId("ride").textContent = "Stop ride";
+  byId("status").textContent = "On track";
+  function tick(now) {
+    const elapsed = (now-start)/1000;
+    const time = elapsed <= end.time ? elapsed : Math.max(0,end.time-(elapsed-end.time));
+    let left = 0;
+    let right = points.length-1;
+    while (left < right) {
+      const middle = Math.floor((left+right)/2);
+      if (points[middle].time < time) left = middle+1;
+      else right = middle;
+    }
+    current = points[left];
+    if (elapsed >= end.time) {
+      byId("status").textContent = profile.failure ?? "Ride complete";
+      if (elapsed >= end.time+reverseTime) {
+        frame = 0;
+        byId("ride").textContent = "Start ride";
+      }
+    }
+    showReadings();
+    renderTrack();
+    if (frame) frame = requestAnimationFrame(tick);
+  }
+  frame = requestAnimationFrame(tick);
+}
+byId("ride").addEventListener("click",ride);
 loadPreset();
 </script>
 </body>
