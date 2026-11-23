@@ -37,3 +37,18 @@ Real-world ride certification, traffic simulation, and multiplayer.
 3. Build ride animation, physics, plots, and failure handling. Test a finished ride, rollback, and both rider-load limits.
 4. Validate the required features against the hand-worked case and record the results.
 5. Describe and build two additional features individually after validation. At least one idea comes from the student.
+
+## Implementation details
+
+The track uses cosine interpolation between handles with ordered horizontal positions, starting at (0, 60), (60, 20), (120, 60), (180, 32), (240, 36), (300, 24) metres. The ride preset lowers the third handle to 42 m and sets the first valley to 36 m, allowing a complete ride. Elevation stays within 5–75 m. The car starts at rest with an infinitesimal downhill displacement approximated by the first sampled interval.
+
+The signed curvature is h'' / (1 + h'²)^(3/2), where derivatives are with respect to horizontal position in metres. The rider-normal load is 1/sqrt(1 + h'²) + v² times signed curvature divided by g. At a handle the curve is horizontal. If curvature differs on either side of the handle, evaluate both sides. The plot uses sampled arc length. Rollback and threshold positions are estimated at intervals of at most 0.15 m horizontally.
+
+### Worked validation case
+
+Use the validation preset with the first three handles at (0, 44), (60, 20), and (120, 44) m. At the first valley the 24 m drop gives v = sqrt(2 × 9.81 × 24) = 21.7007 m/s or 48.54 mph. The cosine segment has valley curvature 24π²/(2 × 60²) = 0.0328987 per metre, giving R = 30.3964 m. Rider load is 1 + (2 × 24)/30.3964 = 2.579 g. Compare within 0.02 mph and 0.02 g. This worked case was prepared with assistant help.
+
+## Features
+
+- Run comparison. Pin the current run's peak speed and rider loads in this browser and compare them to later edits.
+- Track name. Give the route a custom name that appears on the dashboard and travels with a pinned run. Both feature ideas were proposed by the assistant.
