@@ -53,5 +53,224 @@ canvas{display:block;width:100%;height:auto}#track{touch-action:none;cursor:cros
 </section>
 <div class="details" id="extras"></div>
 </main>
+<script>
+"use strict";
+const byId = id => document.getElementById(id);
+const track = byId("track");
+const scene = track.getContext("2d");
+const plot = byId("plot").getContext("2d");
+const presets = {
+  cruise: [44, 34, 39, 32, 37, 30],
+  validation: [44, 20, 44, 32, 36, 24],
+  rollback: [44, 34, 50, 32, 37, 30],
+  high: [75, 5, 39, 32, 37, 30],
+  low: [75, 45, 55, 5, 36, 24]
+};
+const g = 9.81;
+const span = 60;
+const subdivisions = 480;
+let heights, profile, selected = 0, dragged = false;
+let current, frame = 0;
+const xPixel = x => 44 + 3.04 * x;
+const yPixel = h => 345 - 3.9 * h;
+
+function sample(segment, fraction) {
+  const delta = heights[segment + 1] - heights[segment];
+  const angle = fraction * Math.PI;
+  const h = heights[segment] + delta * (1 - Math.cos(angle)) / 2;
+  const slope = delta * Math.PI * Math.sin(angle) / (2 * span);
+  const bend = delta * (Math.PI / span) ** 2 * Math.cos(angle) / 2;
+  const speed = Math.sqrt(2 * g * Math.max(0, heights[0] - h));
+  const load = 1 / Math.hypot(1, slope) + speed ** 2 * bend / (g * Math.hypot(1, slope) ** 3);
+  return {x: (segment + fraction) * span, h, slope, speed, load};
+}
+
+function analyze() {
+  const points = [];
+  let failure;
+  for (let segment = 0; segment < heights.length - 1 && !failure; segment++) {
+    for (let step = 0; step <= subdivisions; step++) {
+      let point = sample(segment, step / subdivisions);
+      const previous = points.at(-1);
+      if (previous && point.h >= heights[0] && (point.x > 0 || heights[1] >= heights[0])) {
+        const delta = heights[segment + 1] - heights[segment];
+        if (delta > 0 && previous.x >= segment * span) {
+          const ratio = (heights[0] - heights[segment]) / delta;
+          point = sample(segment, Math.acos(1 - 2 * ratio) / Math.PI);
+        } else {
+          point = previous;
+        }
+        failure = "Rollback · insufficient speed";
+      } else if (point.load > 4 || point.load < -1) {
+        failure = point.load > 4 ? "Ride stopped · above 4 g" : "Ride stopped · below −1 g";
+      }
+      const length = previous ? Math.hypot(point.x - previous.x, point.h - previous.h) : 0;
+      point.distance = (previous?.distance ?? 0) + length;
+      point.time = (previous?.time ?? 0) + 2 * length / Math.max(0.08, point.speed + (previous?.speed ?? 0));
+      points.push(point);
+      if (failure) break;
+    }
+  }
+  return {points, failure, end: points.at(-1)};
+}
+
+function line(ctx, points, color, width = 1) {
+  if (!points.length) return;
+  ctx.beginPath();
+  ctx.moveTo(...points[0]);
+  for (const point of points.slice(1)) ctx.lineTo(...point);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.stroke();
+}
+
+function crossing() {
+  const sky = scene.createLinearGradient(0, 0, 0, 480);
+  sky.addColorStop(0, "#101329");
+  sky.addColorStop(.73, "#372342");
+  sky.addColorStop(1, "#100e1c");
+  scene.fillStyle = sky;
+  scene.fillRect(0, 0, 1000, 480);
+  for (let i = 0; i < 17; i++) {
+    const x = i * 62;
+    const top = 245 - (i * 53 % 105);
+    scene.fillStyle = i % 2 ? "#17182d" : "#1e1932";
+    scene.fillRect(x, top, 56, 350 - top);
+    for (let y = top + 14; y < 331; y += 20) {
+      scene.fillStyle = (i + y) % 3 ? "#4b496a" : "#896080";
+      scene.fillRect(x + 8, y, 10, 3);
+      scene.fillRect(x + 28, y, 17, 3);
+    }
+  }
+  scene.fillStyle = "#191626";
+  scene.fillRect(0, 350, 1000, 130);
+  for (const direction of [-1, 1]) {
+    for (let i = 0; i < 14; i++) {
+      const x = 490 + i * 28 * direction;
+      line(scene, [[x, 356 + i * 4], [x + direction * 17, 383 + i * 5]], "#9a8aa9", 6);
+    }
+  }
+  for (const [x,y,w,label,color] of [[28,289,122,"SHIBUYA","#79e9fa"],[800,265,164,"ナイトクロス","#ff6aae"]]) {
+    scene.fillStyle = "#20182d";
+    scene.fillRect(x,y,w,35);
+    scene.strokeStyle = color;
+    scene.strokeRect(x,y,w,35);
+    scene.font = "bold 20px system-ui";
+    scene.fillStyle = color;
+    scene.fillText(label,x+10,y+25);
+    const reflection = scene.createLinearGradient(0, 352, 0, 478);
+    reflection.addColorStop(0, color + "00");
+    reflection.addColorStop(.4, color + "36");
+    reflection.addColorStop(1, color + "00");
+    scene.fillStyle = reflection;
+    scene.fillRect(x+12,352,w-24,126);
+  }
+}
+
+function renderTrack() {
+  crossing();
+  scene.font = "15px system-ui";
+  for (const elevation of [20,40,60]) {
+    line(scene, [[43,yPixel(elevation)],[955,yPixel(elevation)]], "#aea1d145");
+    scene.fillStyle = "#ede1ff";
+    scene.fillText(elevation + " m", 48, yPixel(elevation) - 9);
+  }
+  const curve = [];
+  for (let segment = 0; segment < heights.length - 1; segment++) {
+    for (let step = 0; step <= 90; step++) {
+      const point = sample(segment, step / 90);
+      curve.push([xPixel(point.x), yPixel(point.h)]);
+    }
+  }
+  line(scene, curve, "#080913", 13);
+  line(scene, curve, "#79e9fa", 6);
+  heights.forEach((h,i) => {
+    const x = xPixel(i * span);
+    const y = yPixel(h);
+    scene.beginPath();
+    scene.arc(x,y,selected === i ? 10 : 8,0,2*Math.PI);
+    scene.fillStyle = selected === i ? "#ff6aae" : "#141120";
+    scene.fill();
+    scene.strokeStyle = "#f7f1ff";
+    scene.lineWidth = 2;
+    scene.stroke();
+  });
+  if (profile.failure) {
+    const {x,h} = profile.end;
+    scene.font = "bold 24px system-ui";
+    scene.fillStyle = "#ffd081";
+    scene.fillText("⚠", Math.min(933,xPixel(x)+10), yPixel(h)-13);
+  }
+  scene.save();
+  scene.translate(xPixel(current.x),yPixel(current.h));
+  scene.rotate(Math.atan(-current.slope * 3.9 / 3.04));
+  scene.fillStyle = "#ff6aae";
+  scene.fillRect(-19,-13,38,10);
+  scene.fillStyle = "#f7f1ff";
+  scene.fillRect(-12,-18,20,6);
+  scene.fillStyle = "#12111d";
+  for (const wheel of [-12,12]) {
+    scene.beginPath();
+    scene.arc(wheel,-3,4,0,2*Math.PI);
+    scene.fill();
+  }
+  scene.restore();
+}
+
+function resetRide(message = "Ready") {
+  cancelAnimationFrame(frame);
+  frame = 0;
+  profile = analyze();
+  current = profile.points[0];
+  byId("ride").textContent = "Start ride";
+  byId("status").textContent = message;
+  renderTrack();
+}
+
+function moveHandle(index,height) {
+  selected = index;
+  heights[index] = Math.round(Math.max(5,Math.min(75,height)));
+  resetRide("Handle " + (index + 1) + " · " + heights[index] + " m");
+}
+
+function pointer(event) {
+  const bounds = track.getBoundingClientRect();
+  return {x: (event.clientX - bounds.left) * 1000 / bounds.width,
+          y: (event.clientY - bounds.top) * 480 / bounds.height};
+}
+
+track.addEventListener("pointerdown", event => {
+  const {x,y} = pointer(event);
+  const index = Math.round((x-44)/(span*3.04));
+  if (index < 0 || index >= heights.length) return;
+  const tolerance = Math.max(21, 23000 / track.clientWidth);
+  if (Math.hypot(x-xPixel(index*span),y-yPixel(heights[index])) > tolerance) return;
+  selected = index;
+  dragged = true;
+  track.setPointerCapture(event.pointerId);
+  resetRide();
+});
+track.addEventListener("pointermove", event => {
+  if (dragged) moveHandle(selected,(345-pointer(event).y)/3.9);
+});
+track.addEventListener("lostpointercapture", () => { dragged = false; });
+track.addEventListener("keydown", event => {
+  if (/^[1-6]$/.test(event.key)) {
+    moveHandle(Number(event.key)-1,heights[Number(event.key)-1]);
+  } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    event.preventDefault();
+    moveHandle(selected, heights[selected] + (event.key === "ArrowUp" ? 1 : -1));
+  }
+});
+
+function loadPreset() {
+  heights = [...presets[byId("preset").value]];
+  selected = 0;
+  resetRide();
+}
+byId("preset").addEventListener("change", loadPreset);
+byId("reset").addEventListener("click", loadPreset);
+loadPreset();
+</script>
 </body>
 </html>
