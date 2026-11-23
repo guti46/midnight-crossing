@@ -81,3 +81,16 @@ assert.equal(execute("heights[1]"), 35);
 element("reset").handlers.click();
 assert.equal(execute("heights[1]"), 34);
 console.log("Completion, rollback, both load limits, keyboard edits and reset passed.");
+
+element("route-name").value = "Neon Express";
+element("route-name").handlers.input();
+assert.ok(element("current-summary").textContent.includes("Neon Express"));
+element("pin").handlers.click();
+assert.equal(JSON.parse(memory.get("midnight-crossing-pinned")).name, "Neon Express");
+element("route-name").value = "After Hours";
+element("route-name").handlers.input();
+select("validation");
+assert.ok(element("current-summary").textContent.includes("After Hours"));
+assert.ok(element("baseline").textContent.includes("Neon Express"));
+assert.ok(element("baseline").textContent.includes("change +11.5 mph"));
+console.log("Track naming and persisted run comparison passed.");

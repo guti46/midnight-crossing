@@ -6,11 +6,11 @@ Let students design and test a gravity-powered coaster above a fictionalized Shi
 
 ## Inputs
 
-Drag control points on a side-view track. Horizontal position and elevation are in metres. Ride starts the car from rest at the first crest. Reset restores the default route. Point limits and default coordinates are open for review.
+Drag control points on a side-view track. Horizontal position and elevation are in metres. Ride starts the car from rest at the first crest. Reset restores the default route. The six handles range from 5 to 75 m elevation. Horizontal positions and defaults are defined in Implementation details. Presets include a complete ride, a validation valley, rollback, and both load-limit cases.
 
 ## Calculations
 
-Use a smooth curve through the control points. With friction disabled, use v = sqrt(2g(h0 - h)), where g = 9.81 m/s², h0 is the starting elevation in metres, h is current elevation in metres, and v is speed in m/s. Multiply by 2.23694 for mph. At a horizontal valley, the rider load is n = 1 + v²/(gR), where R is the valley radius in metres and n is measured in g. The full-track rider load model and numerical tolerances will be settled in the spec review.
+Use a smooth curve through the control points. With friction disabled, use v = sqrt(2g(h0 - h)), where g = 9.81 m/s², h0 is the starting elevation in metres, h is current elevation in metres, and v is speed in m/s. Multiply by 2.23694 for mph. At a horizontal valley, the rider load is n = 1 + v²/(gR), where R is the valley radius in metres and n is measured in g. See Implementation details for the full-track rider load model and sampling.
 
 Mark the turnaround when the next rise exhausts the car's kinetic energy and show it rolling back. Flag rider loads above 4 g or below -1 g and mark the first threshold crossing.
 
@@ -24,7 +24,7 @@ Dark street-racing dashboard with magenta and icy blue accents. The route editor
 
 ## Validation
 
-Add the student-worked first-drop speed and valley rider-load case here, including the exact starting elevation, valley elevation, radius, expected mph and g, and the app's measured results once built.
+See Worked validation case for the hand calculation and the app readings.
 
 ## Out of scope
 
