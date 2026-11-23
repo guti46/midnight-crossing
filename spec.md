@@ -46,9 +46,9 @@ The signed curvature is h'' / (1 + h'²)^(3/2), where derivatives are with respe
 
 ### Worked validation case
 
-Use the validation preset with the first three handles at (0, 44), (60, 20), and (120, 44) m. At the first valley the 24 m drop gives v = sqrt(2 × 9.81 × 24) = 21.6998 m/s or 48.54 mph. The cosine segment has valley curvature 24π²/(2 × 60²) = 0.0328987 per metre, giving R = 30.3964 m. Rider load is 1 + (2 × 24)/30.3964 = 2.579 g. Compare within 0.02 mph and 0.02 g. The app reported 48.54 mph and 2.579 g at the arrival side of the first valley. Both checks passed. The test also passed a finished ride, rollback, both load limits, keyboard editing, and reset. Reproduce with node 02_validation/check-ride.cjs. This worked case was prepared with assistant help.
+Use the validation preset with the first three handles at (0, 44), (60, 20), and (120, 44) m. At the first valley the 24 m drop gives v = sqrt(2 × 9.81 × 24) = 21.6998 m/s or 48.54 mph. The cosine segment has valley curvature 24π²/(2 × 60²) = 0.0328987 per metre, giving R = 30.3964 m. Rider load is 1 + (2 × 24)/30.3964 = 2.579 g. Compare within 0.02 mph and 0.02 g. The app reported 48.54 mph and 2.579 g at the arrival side of the first valley. Both checks passed. The test also passed a finished ride, rollback, both load limits, keyboard editing, and reset. Reproduce with node 02_validation/check-ride.cjs.
 
 ## Features
 
 - Run comparison. Pin the current run's peak speed and rider loads in this browser and compare them to later edits.
-- Track name. Give the route a custom name that appears on the dashboard and travels with a pinned run. Both feature ideas were proposed by the assistant.
+- Track name. Give the route a custom name that appears on the dashboard and travels with a pinned run.
