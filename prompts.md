@@ -52,3 +52,7 @@ I then asked what a detailed log would look like for the rubric and requested th
 - Verify the layout and interactions in a browser and record what I observe.
 - Publish to GitHub Pages and check the live URL.
 - Upload `index.html`, `spec.md`, and `prompts.md` to Learning Suite and paste the live URL in the submission comments.
+
+## Submission walkthrough
+
+I asked how to turn in Midnight Crossing. Codex checked GitHub's publishing instructions and explained how to push the existing commit history, enable Pages from main at the repository root, and upload the three files and live URL to Learning Suite. Publication and submission are pending.
