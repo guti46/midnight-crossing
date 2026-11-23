@@ -40,13 +40,13 @@ Real-world ride certification, traffic simulation, and multiplayer.
 
 ## Implementation details
 
-The track uses cosine interpolation between handles with ordered horizontal positions, starting at (0, 60), (60, 20), (120, 60), (180, 32), (240, 36), (300, 24) metres. The ride preset lowers the third handle to 42 m and sets the first valley to 36 m, allowing a complete ride. Elevation stays within 5–75 m. The car starts at rest with an infinitesimal downhill displacement approximated by the first sampled interval.
+The track uses cosine interpolation between handles with ordered horizontal positions, with horizontal positions of 0, 60, 120, 180, 240, and 300 m. The default heights are 44, 34, 39, 32, 37, and 30 m, allowing a complete ride. Handles move vertically by drag or in 1 m keyboard increments. Reset reloads the currently selected preset. Elevation stays within 5–75 m. The car starts at rest with an infinitesimal downhill displacement approximated by the first sampled interval.
 
 The signed curvature is h'' / (1 + h'²)^(3/2), where derivatives are with respect to horizontal position in metres. The rider-normal load is 1/sqrt(1 + h'²) + v² times signed curvature divided by g. At a handle the curve is horizontal. If curvature differs on either side of the handle, evaluate both sides. The plot uses sampled arc length. Rollback and threshold positions are estimated at intervals of at most 0.15 m horizontally.
 
 ### Worked validation case
 
-Use the validation preset with the first three handles at (0, 44), (60, 20), and (120, 44) m. At the first valley the 24 m drop gives v = sqrt(2 × 9.81 × 24) = 21.7007 m/s or 48.54 mph. The cosine segment has valley curvature 24π²/(2 × 60²) = 0.0328987 per metre, giving R = 30.3964 m. Rider load is 1 + (2 × 24)/30.3964 = 2.579 g. Compare within 0.02 mph and 0.02 g. This worked case was prepared with assistant help.
+Use the validation preset with the first three handles at (0, 44), (60, 20), and (120, 44) m. At the first valley the 24 m drop gives v = sqrt(2 × 9.81 × 24) = 21.6998 m/s or 48.54 mph. The cosine segment has valley curvature 24π²/(2 × 60²) = 0.0328987 per metre, giving R = 30.3964 m. Rider load is 1 + (2 × 24)/30.3964 = 2.579 g. Compare within 0.02 mph and 0.02 g. The app reported 48.54 mph and 2.579 g at the arrival side of the first valley. Both checks passed. The test also passed a finished ride, rollback, both load limits, keyboard editing, and reset. Reproduce with node 02_validation/check-ride.cjs. This worked case was prepared with assistant help.
 
 ## Features
 
