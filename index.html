@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Midnight Crossing | Coaster Designer</title>
+<style>
+:root{color-scheme:dark;--ink:#f7f1ff;--muted:#bdb0cf;--pink:#ff6aae;--cyan:#79e9fa;--panel:#151222;--line:#39304c}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#271630,#0c0a14 55%);color:var(--ink);font:1rem system-ui,sans-serif}
+main{max-width:1180px;margin:auto;padding:clamp(16px,4vw,48px)}
+header{display:flex;align-items:end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+h1,h2,p{margin:0}h1{font-size:clamp(2.5rem,8vw,5.3rem);line-height:.9;letter-spacing:-.075em;font-style:italic}h1 span{color:var(--pink)}
+h2{font-size:1.05rem}p{color:var(--muted)}header p{margin-top:12px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.toolbar,.pad{padding:16px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar h2{margin-right:auto}
+button,select,input{font:inherit;border:1px solid #66577a;background:#211a30;color:var(--ink);border-radius:8px;padding:9px 12px}
+button{cursor:pointer}button.primary{background:var(--cyan);color:#09151d;border-color:var(--cyan);font-weight:750}
+button:disabled{opacity:.5;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+canvas{display:block;width:100%;height:auto}#track{touch-action:none;cursor:crosshair}
+.notes{display:flex;align-items:center;justify-content:space-between;gap:8px 24px;flex-wrap:wrap;padding:12px 16px}
+#gaugeGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.gauge{padding:14px}.gauge strong{display:block;font-size:clamp(1.3rem,4vw,2.4rem);line-height:1.2;color:var(--cyan);font-variant-numeric:tabular-nums}
+.gauge:nth-child(2) strong{color:var(--pink)}
+.gauge span,.notes,.legend{font-size:.875rem}.legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+.speed{color:var(--cyan)}.load{color:var(--pink)}.warn{color:#ffd081}
+.details{margin-top:12px;display:grid;gap:12px}.details p{margin-top:6px}
+@media(max-width:520px){#gaugeGrid{grid-template-columns:1fr 1fr}.gauge:last-child{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>Midnight <span>Crossing</span></h1><p>Shibuya · Coaster designer</p></div></header>
+<section class="panel" aria-labelledby="editor">
+<div class="toolbar">
+<h2 id="editor">Track editor</h2>
+<label for="preset">Preset</label>
+<select id="preset"><option value="cruise">Crossing Cruise</option><option value="validation">Validation Valley</option><option value="rollback">Rollback</option><option value="high">Over 4 g</option><option value="low">Below −1 g</option></select>
+<button id="reset">Reset track</button><button class="primary" id="ride">Start ride</button>
+</div>
+<canvas id="track" width="1000" height="480" tabindex="0" aria-label="Editable coaster track" aria-describedby="edit-help"></canvas>
+<div class="notes"><p id="edit-help">Drag track handles. With the track focused, use 1–6 to select a handle and ↑ / ↓ to move it.</p><span id="status" role="status">Ready</span></div>
+</section>
+<section id="gaugeGrid" aria-label="Live ride readings">
+<div class="panel gauge"><span>Speed</span><strong id="speed">0.0 mph</strong></div>
+<div class="panel gauge"><span>Rider load</span><strong id="load">1.00 g</strong></div>
+<div class="panel gauge"><span>Track distance</span><strong id="distance">0.0 m</strong></div>
+</section>
+<section class="panel pad" aria-labelledby="telemetry">
+<h2 id="telemetry">Run telemetry</h2><div class="legend"><span class="speed">Speed · mph · left axis</span><span class="load">Rider load · g · right axis</span><span class="warn">Limits · −1 g and 4 g</span></div>
+<canvas id="plot" width="1000" height="300" role="img" aria-label="Speed and rider load plotted by track distance"></canvas>
+<p id="valley"></p>
+</section>
+<div class="details" id="extras"></div>
+</main>
+</body>
+</html>
