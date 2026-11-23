@@ -51,7 +51,10 @@ canvas{display:block;width:100%;height:auto}#track{touch-action:none;cursor:cros
 <canvas id="plot" width="1000" height="300" role="img" aria-label="Speed and rider load plotted by track distance"></canvas>
 <p id="valley"></p>
 </section>
-<div class="details" id="extras"></div>
+<div class="details"><section class="panel pad" aria-labelledby="compare">
+<div class="toolbar" style="padding:0"><h2 id="compare">Run comparison</h2><button id="pin">Pin current run</button></div>
+<p id="current-summary"></p><p id="baseline" role="status">Pin a run to compare it with later edits.</p>
+</section></div>
 </main>
 <script>
 "use strict";
@@ -225,7 +228,7 @@ function resetRide(message = "Ready") {
   byId("ride").textContent = "Start ride";
   byId("status").textContent = message;
   showReadings();
-  renderTelemetry();
+  renderTelemetry(); updateComparison();
   renderTrack();
 }
 
@@ -356,6 +359,39 @@ function ride() {
   frame = requestAnimationFrame(tick);
 }
 byId("ride").addEventListener("click",ride);
+const storageKey = "midnight-crossing-pinned";
+let pinned;
+try {
+  pinned = JSON.parse(localStorage.getItem(storageKey));
+} catch {
+  pinned = null;
+}
+function runSummary() {
+  const speeds = profile.points.map(point => point.speed*2.23694);
+  const loads = profile.points.map(point => point.load);
+  return {speed: Math.max(...speeds), min: Math.min(...loads), max: Math.max(...loads)};
+}
+function describeRun(run) {
+  return run.speed.toFixed(1)+" mph peak · "+run.min.toFixed(2)+" to "+run.max.toFixed(2)+" g";
+}
+function updateComparison() {
+  const currentRun = runSummary();
+  byId("current-summary").textContent = "Current · "+describeRun(currentRun);
+  const hasBaseline = pinned && [pinned.speed,pinned.min,pinned.max].every(Number.isFinite);
+  if (hasBaseline) {
+    const difference = currentRun.speed-pinned.speed;
+    byId("baseline").textContent = "Pinned · "+describeRun(pinned)+" · Current peak speed change "+(difference>=0?"+":"")+difference.toFixed(1)+" mph";
+  }
+}
+byId("pin").addEventListener("click", () => {
+  pinned = runSummary();
+  try {
+    localStorage.setItem(storageKey,JSON.stringify(pinned));
+  } catch {
+    // The current tab can still compare runs if storage is unavailable.
+  }
+  updateComparison();
+});
 loadPreset();
 </script>
 </body>
