@@ -56,3 +56,4 @@ I then asked what a detailed log would look like for the rubric and requested th
 ## Submission walkthrough
 
 I asked how to turn in Midnight Crossing. Codex checked GitHub's publishing instructions and explained how to push the existing commit history, enable Pages from main at the repository root, and upload the three files and live URL to Learning Suite. Publication and submission are pending.
+- Shared the empty guti46/midnight-crossing repository page. Confirmed the local remote status and provided the exact push commands. Outcome: GitHub repository created; push pending.
